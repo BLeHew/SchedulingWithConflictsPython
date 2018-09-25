@@ -1,10 +1,8 @@
-from semester import semester
-from course import course
 def main():
     courseSchedules = {}
     coursesList = {}
     
-    with open("course.txt") as text_file:
+    with open("courses.txt") as text_file:
         contents = text_file.readlines()[1: ]        
         
         for line in contents:
