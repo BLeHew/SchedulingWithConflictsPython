@@ -1,3 +1,6 @@
+from .course import course
+from .semester import semester
+
 def main():
     courseSchedules = {}
     coursesList = {}

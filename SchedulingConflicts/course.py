@@ -16,7 +16,7 @@ class CourseSchedule :
         self.springDays = springDays       
         self.summerDays = summerDays
         
-    def getDays(self,int semTaken):
-        if
+    def getDays(self,semTaken):
+        print("yes")
        
        
