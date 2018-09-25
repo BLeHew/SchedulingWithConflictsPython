@@ -18,5 +18,6 @@ class CourseSchedule :
         
     def getDays(self,semTaken):
         print("yes")
-       
+
+      
        

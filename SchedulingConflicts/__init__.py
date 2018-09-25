@@ -1,5 +1,4 @@
-from .course import course
-from .semester import semester
+import random
 
 def main():
     courseSchedules = {}
@@ -43,5 +42,6 @@ def assignSemesters(courseSchedules, courseConstraints,coursesList):
         
         
 def setSemTaken(course, semester, sems):
+    print("yes")
     
 main()
