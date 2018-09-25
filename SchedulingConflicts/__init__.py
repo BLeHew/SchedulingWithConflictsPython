@@ -1,5 +1,6 @@
+from semester import Semester
+from course import Course
 import random
-
 def main():
     courseSchedules = {}
     coursesList = {}
