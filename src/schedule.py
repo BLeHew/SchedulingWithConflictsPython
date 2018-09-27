@@ -1,40 +1,50 @@
 from semester import Semester
-from course import CourseSchedule
+from course import Course
 import random
+import time
 
 
 class Schedule(object):
-    sems = [Semester]
+    sems = []
     courseswithconflicts = set()
 
-    CONSCONFLICT = .999
-    DAYCONFLICT = .999999
+    CONSCONFLICT = .99
+    DAYCONFLICT = .9999
     NOCONFLICT = 1.000001
     DOMAINCONFLICT = 0
 
-    def __init__(self, courseslist, courseschedules, courseconstraints):
-        self.makesems()
-        self.assignsemesters(courseslist, courseschedules)
-        self.schedprint(courseslist)
-        #self.checkconflicts(courseslist, courseconstraints)
-        #self.solve(courseslist, courseconstraints, courseschedules)
-        #self.schedprint(courseslist)
+    def __init__(self, courseslist, courseconstraints):
+        self.assignsemesters(courseslist)
+        self.schedprint()
+        self.checkconflicts(courseslist, courseconstraints)
+        t0 = time.time()
+        self.solve(courseslist, courseconstraints)
+        t1 = time.time() - t0
+        print("Took: ", t1)
+        self.schedprint()
 
     def getnonfullsemesters(self):
         nonfull = []
 
-        for i in range(0, len(self.sems)):
+        for i in range(0, len(self.sems) - 1):
             if self.sems[i].canaddmoredays():
                 nonfull.append(i)
 
         return nonfull
 
-    def assignsemesters(self, courseslist, courseschedules):
+    def assignsemesters(self, courseslist):
+
+        for i in range(0, 11):
+            i = Semester(i)
+            self.sems.append(i)
+
+        random.seed(2)
+
         for course in courseslist.values():
-            #nextsem = random.randint(0, len(self.sems))
-            nextsem = 5
+            nextsem = random.randint(0, len(self.sems) - 1)
             course.semtaken = nextsem
-            self.sems[nextsem].add(course, courseschedules.get(course))
+            self.sems[nextsem].addcourse(course)
+
             if self.sems[nextsem].hasrightamountofdays:
                 self.getdaysfromsemester(self.sems[nextsem], courseslist)
 
@@ -42,9 +52,14 @@ class Schedule(object):
         self.courseswithconflicts.clear()
 
         for coursename, course in courseslist.items():
-            if course in courseconstraints:
-                for rhscourse, constrainttype in courseconstraints[course].items():
+            if coursename in courseconstraints:
+                for rhscourse, constrainttype in courseconstraints[coursename].items():
                     if constrainttype == "<":
+                        if course.fitness.semfitness[10] > 0:
+                            course.fitness.semfitness[10] *= 0
+                        if courseslist[rhscourse].fitness.semfitness[0] > 0:
+                            courseslist[rhscourse].fitness.semfitness[0] *= 0
+
                         if course.semtaken >= courseslist[rhscourse].semtaken:
                             self.courseswithconflicts.add(coursename)
                             self.courseswithconflicts.add(rhscourse)
@@ -59,46 +74,51 @@ class Schedule(object):
 
             if self.sems[course.semtaken].hastoomanydays():
                 self.courseswithconflicts.add(coursename)
+                course.fitness.update(course.semtaken, self.DAYCONFLICT)
             if course.day == '-':
                 self.courseswithconflicts.add(coursename)
+                course.fitness.update(course.semtaken, self.DAYCONFLICT)
             if course not in self.courseswithconflicts:
                 course.fitness.update(course.semtaken, self.NOCONFLICT)
 
     def getdaysfromsemester(self, semester, courseslist):
+        for k, v in semester.semcourses.items():
+            courseslist[k].day = v.day
+            courseslist[k].semtaken = v.semtaken
 
-        for k, v in semester.assigneddays.items():
-            courseslist[k].day = v
+    def changesem(self, course, newsem,  courseslist):
+        self.sems[courseslist[course].semtaken].remove(course)
+        if self.sems[courseslist[course].semtaken].hasrightamountofdays:
+            self.getdaysfromsemester(self.sems[courseslist[course].semtaken], courseslist)
 
-    def changesem(self, course,newsem,  courseslist, courseschedules):
-        self.sems[course.semtaken].remove(course)
-        if self.sems[course.semtaken].hasrightamountofdays:
-            self.getdaysfromsemester(course.semtaken, courseslist)
-
-        self.sems[newsem].add(course, courseschedules.get(course))
+        self.sems[newsem].addcourse(courseslist[course])
         courseslist[course].semtaken = newsem
 
         if self.sems[newsem].hasrightamountofdays():
-            self.getdaysfromsemester(newsem, courseslist)
+            self.getdaysfromsemester(self.sems[newsem], courseslist)
 
-    def makesems(self):
-        for i in range(12):
-            s = Semester(i)
-            self.sems.append(s)
+    def schedprint(self):
+        i = 0
+        for s in self.sems:
+            print(i, end=" ")
+            for c in s.semcourses.values():
+                print(c.name + "\t" + c.day, end="\t")
+            print()
+            i += 1
+        print()
 
-    def schedprint(self, courseslist):
-        semoutput = [11]
-        output = ""
-
-        for c in courseslist.items():
-            semoutput[c.semtaken].append(c.name + "\t" + c.day + "\t")
-
-        for i in range(0, len(self.sems)):
-            output.append(i + ". " + semoutput[i])
-
-        print(output)
-
-    def solve(self, courseslist, courseconstraints, courseschedules):
+    def solve(self, courseslist, courseconstraints):
+        i = 1
         while len(self.courseswithconflicts) > 0:
+            if i % 10000 == 0:
+                self.schedprint()
+                for c in self.courseswithconflicts:
+                    print(c, end=" ")
+                    for j in courseslist[c].fitness.semfitness:
+                        print(j, " ", end="")
+                    print()
             for c in self.courseswithconflicts:
-                self.changesem(c, courseslist.get(c).fitness.getbestnonfullsemester(self.getnonfullsemesters()), courseslist, courseschedules)
+                self.changesem(c, courseslist.get(c).fitness.getbestnonfullsemester(self.getnonfullsemesters()), courseslist)
             self.checkconflicts(courseslist, courseconstraints)
+            i += 1
+
