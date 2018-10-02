@@ -59,7 +59,6 @@ class Schedule(object):
                             course.fitness.semfitness[10] *= 0
                         if courseslist[rhscourse].fitness.semfitness[0] > 0:
                             courseslist[rhscourse].fitness.semfitness[0] *= 0
-
                         if course.semtaken >= courseslist[rhscourse].semtaken:
                             self.courseswithconflicts.add(coursename)
                             self.courseswithconflicts.add(rhscourse)
@@ -112,11 +111,6 @@ class Schedule(object):
         while len(self.courseswithconflicts) > 0:
             if i % 10000 == 0:
                 self.schedprint()
-                for c in self.courseswithconflicts:
-                    print(c, end=" ")
-                    for j in courseslist[c].fitness.semfitness:
-                        print(j, " ", end="")
-                    print()
             for c in self.courseswithconflicts:
                 self.changesem(c, courseslist.get(c).fitness.getbestnonfullsemester(self.getnonfullsemesters()), courseslist)
             self.checkconflicts(courseslist, courseconstraints)

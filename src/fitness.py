@@ -13,7 +13,7 @@ class Fitness:
     def getbestnonfullsemester(self, nonfullsemesters):
         if len(nonfullsemesters) > 0:
             best = nonfullsemesters[0]
-            for i in range(1,len(nonfullsemesters)):
+            for i in range(1, len(nonfullsemesters)):
                 best = i if self.semfitness[i] > self.semfitness[best] else best
             return best
         else:
